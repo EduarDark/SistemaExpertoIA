@@ -30,12 +30,14 @@ def mostrar_menu_principal():
     return input("Ingrese el número de su elección: ")
 
 def mostrar_opciones(area):
-    opciones = conocimientos.get(area, {})
+    opciones = conocimientos.get(area)
     if opciones:
         print("\nSeleccione su caso específico:")
         for clave, descripcion in opciones.items():
             print(f"{clave}. {descripcion}")
         print("x. Volver al menú principal")
+    else:
+        print("\nÁrea no válida. Por favor, intente nuevamente.")
     return opciones
 
 def obtener_respuesta(area, caso):
@@ -43,12 +45,12 @@ def obtener_respuesta(area, caso):
 
 def guardar_consulta(area, caso, respuesta):
     with open(HISTORIAL_FILE, "a") as file:
-        file.write(f"Área {area}, Caso {caso}: {respuesta}\n")
+        file.write(f"Área {area}, Caso {caso}:\n{respuesta}\n{'-' * 50}\n")
 
 def mostrar_historial():
     try:
         with open(HISTORIAL_FILE, "r") as file:
-            contenido = file.read()
+            contenido = file.read().strip()
         if contenido:
             print("\n=== Historial de Consultas ===")
             print(contenido)
@@ -58,47 +60,54 @@ def mostrar_historial():
         print("\nNo hay historial disponible.")
 
 def buscar_por_palabra_clave():
-    palabra = input("\nIngrese una palabra clave para buscar: ").lower()
-    resultados = []
-    for area in conocimientos.values():
-        for descripcion in area.values():
-            if palabra in descripcion.lower():
-                resultados.append(descripcion)
+    palabra = input("\nIngrese una palabra clave para buscar: ").strip().lower()
+    resultados = [
+        descripcion
+        for area in conocimientos.values()
+        for descripcion in area.values()
+        if palabra in descripcion.lower()
+    ]
     if resultados:
-        print("\nResultados encontrados:")
+        print("\n=== Resultados encontrados ===")
         for res in resultados:
             print(f"- {res}")
     else:
         print("No se encontraron resultados para su búsqueda.")
 
+# Validación de entrada para números
+def entrada_numerica_valida(prompt, opciones_validas):
+    entrada = input(prompt).strip()
+    while entrada not in opciones_validas:
+        print("Entrada no válida. Intente nuevamente.")
+        entrada = input(prompt).strip()
+    return entrada
+
 # Menú principal
 def main():
     while True:
-        opcion = mostrar_menu_principal()
+        opcion = entrada_numerica_valida(mostrar_menu_principal(), ["1", "2", "3", "4"])
         if opcion == "1":
             print("\nSeleccione el área de su consulta:")
             print("1. Disputas Agrarias")
             print("2. Derechos Laborales")
             print("3. Trámites Legales")
-            area = input("Ingrese el número del área: ")
+            area = entrada_numerica_valida("Ingrese el número del área: ", ["1", "2", "3"])
             opciones = mostrar_opciones(area)
             if opciones:
-                caso = input("Ingrese la letra de su elección: ")
-                if caso != "x":
-                    respuesta = obtener_respuesta(area, caso)
-                    print("\nRespuesta:", respuesta, "\n")
+                caso = input("Ingrese la letra de su elección: ").strip().lower()
+                if caso == "x":
+                    continue
+                respuesta = obtener_respuesta(area, caso)
+                print("\nRespuesta:", respuesta, "\n")
+                if respuesta != "Opción no válida. Por favor, intente nuevamente.":
                     guardar_consulta(area, caso, respuesta)
-            else:
-                print("Área no válida. Por favor, intente nuevamente.")
         elif opcion == "2":
             buscar_por_palabra_clave()
         elif opcion == "3":
             mostrar_historial()
         elif opcion == "4":
-            print("Gracias por usar la Guía Legal Personalizada. ¡Hasta luego!")
+            print("\nGracias por usar la Guía Legal Personalizada. ¡Hasta luego!")
             break
-        else:
-            print("Opción no válida. Por favor, intente nuevamente.")
 
 # Ejecutar el programa
 if __name__ == "__main__":
